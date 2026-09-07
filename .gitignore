@@ -1,0 +1,12 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+
+# Old drafts / stray files, not part of the current tool
+Main_V1.py
+Main_V2.py
+Company
+Reports/

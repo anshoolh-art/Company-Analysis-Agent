@@ -1,0 +1,130 @@
+{
+  "industry": "Advanced Manufacturing / Semiconductor",
+  "currency": "SGD million",
+  "periods": [
+    "FY2024",
+    "FY2025"
+  ],
+  "source_basis": "Public financial data; values retained in SGD million. Fiscal year-end differs for Micro-Mechanics (June).",
+  "data_policy": "Raw reported financial inputs only. Derived metrics are calculated in Python. EBITDA is intentionally omitted until depreciation and amortisation are sourced consistently for all companies.",
+  "companies": [
+    {
+      "name": "Venture Corporation",
+      "ticker": "V03",
+      "fiscal_year_end": "December",
+      "FY2024": {
+        "operating_income": 260.5,
+        "cash": 1318.0,
+        "inventory": 686.43,
+        "receivables": 704.82,
+        "operating_cash_flow": 482.51,
+        "total_debt": 30.25,
+        "revenue": 2735.93
+      },
+      "FY2025": {
+        "operating_income": 243.3,
+        "cash": 1285.0,
+        "inventory": 695.84,
+        "receivables": 638.31,
+        "operating_cash_flow": 251.535,
+        "total_debt": 19.63,
+        "revenue": 2534.52
+      },
+      "source_note": "Income statement from Twelve Data; balance sheet and cash flow from StockAnalysis/SGX annual report."
+    },
+    {
+      "name": "UMS Integration",
+      "ticker": "558",
+      "fiscal_year_end": "December",
+      "FY2024": {
+        "operating_income": 40.91,
+        "cash": 80.82,
+        "inventory": 109.0,
+        "receivables": 39.07,
+        "operating_cash_flow": 56.44,
+        "total_debt": 1.62,
+        "revenue": 242.12
+      },
+      "FY2025": {
+        "operating_income": 49.23,
+        "cash": 44.21,
+        "inventory": 152.0,
+        "receivables": 33.52,
+        "operating_cash_flow": 39.66,
+        "total_debt": 1.15,
+        "revenue": 251.06
+      },
+      "source_note": "Revenue/profit/balance-sheet/cash-flow from UMS annual report and MarketScreener; FY2025 EBITDA is operating income + D&A (25.22m), FY2024 EBITDA is operating income + D&A (20.10m)."
+    },
+    {
+      "name": "AEM Holdings",
+      "ticker": "AWX",
+      "fiscal_year_end": "December",
+      "FY2024": {
+        "operating_income": 16.03,
+        "cash": 43.78,
+        "inventory": 296.77,
+        "receivables": 139.0,
+        "operating_cash_flow": -17.54,
+        "total_debt": 94.38,
+        "revenue": 380.41
+      },
+      "FY2025": {
+        "operating_income": 25.99,
+        "cash": 77.33,
+        "inventory": 226.97,
+        "receivables": 121.17,
+        "operating_cash_flow": 136.0,
+        "total_debt": 16.37,
+        "revenue": 399.34
+      },
+      "source_note": "Income statement and balance sheet from AEM FY2025 annual report / Twelve Data / StockAnalysis; EBITDA reflects standardized data-provider figure."
+    },
+    {
+      "name": "Frencken Group",
+      "ticker": "E28",
+      "fiscal_year_end": "December",
+      "FY2024": {
+        "operating_income": 47.0,
+        "cash": 159.2,
+        "inventory": 226.47,
+        "receivables": 154.16,
+        "operating_cash_flow": 100.59,
+        "total_debt": 133.55,
+        "revenue": 794.3
+      },
+      "FY2025": {
+        "operating_income": 48.0,
+        "cash": 161.88,
+        "inventory": 198.55,
+        "receivables": 163.92,
+        "operating_cash_flow": 166.69,
+        "total_debt": 90.02,
+        "revenue": 865.1
+      },
+      "source_note": "Income statement from Twelve Data; balance sheet and cash flow from StockAnalysis."
+    },
+    {
+      "name": "Micro-Mechanics (Holdings)",
+      "ticker": "5DD",
+      "fiscal_year_end": "June",
+      "FY2024": {
+        "operating_income": 11.84,
+        "cash": 16.57,
+        "inventory": 3.91,
+        "receivables": 11.61,
+        "total_debt": 1.0,
+        "revenue": 57.89
+      },
+      "FY2025": {
+        "operating_income": 16.56,
+        "cash": 23.28,
+        "inventory": 3.14,
+        "receivables": 12.56,
+        "total_debt": 1.0,
+        "revenue": 65.21
+      },
+      "source_note": "Micro-Mechanics FY2025 company release and MarketScreener; EBITDA is company-reported."
+    }
+  ]
+}
