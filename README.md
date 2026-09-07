@@ -2,7 +2,7 @@
 
 A command-line tool that combines deterministic financial-metric calculations with an LLM "review council" (Analyst → Challenger → Defense → Judge) to answer free-form questions about a peer group of companies.
 
-You ask a question (e.g. *"Which company has the most debt?"*); the tool computes standardized metrics from the raw financial data in Python, then runs those metrics through a multi-agent review loop that drafts an answer, adversarially challenges it, defends/revises it, and independently judges whether the final answer is well-supported — before printing you a single clean conclusion.
+You ask a question (e.g. *"Which company has the most debt?"*); the tool computes standardized metrics from the raw financial data in Python, then runs those metrics through a multi-agent review loop that drafts an answer, adversarially challenges it, defends/revises it, and independently judges whether the final answer is well-supported before printing you a single clean conclusion.
 
 ## Setup
 
@@ -37,20 +37,21 @@ metrics.py            deterministic layer (no LLM calls)
   detect_anomalies()    rule-based flags (e.g. receivables outgrowing revenue)
         │
         ▼
-main.py                orchestration + LLM review council
+agent.py               prompt construction + the review council
+  build_analyst_prompt() / build_challenger_prompt() / build_defense_prompt() / build_judge_prompt()
+  run_single_agent()     Analyst only, one call — no review loop
+  run_council()          Analyst -> Challenger -> Defense -> Judge, looping up
+                         to MAX_REVIEW_ROUNDS times, exits early on Judge PASS
+        │
+        ▼
+main.py                 CLI entry point
   1. Load data, compute metrics/anomalies per company (metrics.py)
   2. Prompt for a user question
-  3. ANALYST      — drafts an initial answer using the Python metrics + raw data
-  4. Loop up to MAX_REVIEW_ROUNDS times:
-       CHALLENGER — adversarially stress-tests the current conclusion, returns PASS/FAIL
-       DEFENSE    — the analyst defends or revises in light of the challenge
-       JUDGE      — independently evaluates whether the (revised) conclusion is
-                    well-supported, returns PASS/FAIL
-       -> exits the loop as soon as the Judge returns PASS
-  5. Print only the final answer (DEBUG_MODE=True shows every round's full output)
+  3. Run run_council() and print the final answer
+     (DEBUG_MODE=True also prints every round's full output)
 ```
 
-Each of Analyst/Challenger/Defense/Judge is one call to the OpenAI Responses API (`run_agent()` in `main.py`), all using the same peer dataset as context so nothing is invented outside the supplied numbers.
+`agent.py` holds all the prompt text and the council logic so it has exactly one copy, reusable by both `main.py` (the CLI) and `compare_single_vs_council.py` (the eval script below) without duplicating ~250 lines of prompt text. Each of Analyst/Challenger/Defense/Judge is one call to the OpenAI Responses API (`run_agent()` in `agent.py`), all using the same peer dataset as context so nothing is invented outside the supplied numbers.
 
 ### Settings (top of `main.py`)
 
@@ -68,6 +69,46 @@ pytest tests/
 ```
 
 `tests/test_metrics.py` checks `calculate_metrics()`'s output against hand-calculated values (operating margin, DSO, cash conversion, debt-to-revenue, revenue growth) worked out independently from Venture Corporation's real FY2024/FY2025 figures in the dataset, plus edge cases for missing/zero inputs.
+
+Note: `agent.py`'s prompt-building and review-loop logic (parsing, verdict handling, round-exit conditions) isn't unit tested — it's harder to test without mocking the OpenAI client, and hasn't been done yet.
+
+## Evaluation: does the council actually help?
+
+The 4-agent council (Analyst → Challenger → Defense → Judge) was a
+design hypothesis, not a measured improvement — running it costs up
+to ~4x more API calls and latency than a single Analyst call, and
+that trade-off is only worth it if the extra review rounds actually
+produce better answers.
+
+`compare_single_vs_council.py` tests this with **three** conditions,
+not two, on a fixed set of 10 questions (a mix of objective
+fact-lookups and genuinely open-ended ones):
+
+- **(a) Naive single-agent** — `run_single_agent()`, one call, no
+  self-critique instruction.
+- **(b) Self-critique single-agent** — `run_self_critique_agent()`,
+  one call, but explicitly told to draft, challenge itself using the
+  *same checklist* the real Challenger uses, then revise.
+- **(c) Full council** — `run_council()`, the actual pipeline.
+
+(b) exists because (a) vs (c) alone can't separate two different
+questions: "does asking for self-critique help" vs. "does splitting
+that critique across separate API calls/personas help." Without (b),
+a council win over (a) could just mean the council does more
+reasoning overall, not that the specific multi-agent structure is
+what matters.
+
+`SCORING.md` has the rubric for turning the three-way output into an
+actual verdict.
+
+```bash
+python compare_single_vs_council.py
+```
+
+Status: script is built and smoke-tested (with a mocked API client,
+to confirm the plumbing works), but not yet run against the real
+dataset with a live API key — the results and conclusion aren't in
+yet.
 
 ## Known Limitations
 
