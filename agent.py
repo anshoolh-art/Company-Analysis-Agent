@@ -456,6 +456,12 @@ company called strongest despite having the worst debt or margin
 figures in the same dataset? This is a valid basis for FAIL even if no
 other issue is found.
 
+Do not return FAIL solely because the Challenger raised an
+INTERPRETIVE point. An interpretive disagreement should be noted
+(see confidence guidance below) but is not itself grounds for FAIL --
+only a FACTUAL issue (from the Challenger or your own independent
+check, including the cross-consistency check above) justifies FAIL.
+
 In addition to your verdict, assess your confidence in the final
 conclusion:
 
@@ -765,7 +771,8 @@ def run_council(client, user_question, peer_data_json, max_rounds=3, model=DEFAU
       trail              -- per-round challenger/defense/judge/verdict/
                              challenge_type, for DEBUG_MODE-style inspection
     """
-    analyst_response = run_agent(client, build_analyst_prompt(user_question, peer_data_json), model=model)
+    analyst_response = run_agent(client, build_analyst_prompt(
+        user_question, peer_data_json), model=model)
 
     current_conclusion = analyst_response
     defense_response = analyst_response
@@ -779,23 +786,29 @@ def run_council(client, user_question, peer_data_json, max_rounds=3, model=DEFAU
 
         challenger_response = run_agent(
             client,
-            build_challenger_prompt(user_question, current_conclusion, peer_data_json),
+            build_challenger_prompt(
+                user_question, current_conclusion, peer_data_json),
             model=model,
         )
-        challenge_type = extract_section(challenger_response, "CHALLENGE_TYPE", "CHALLENGE").strip().upper()
+        challenge_type = extract_section(
+            challenger_response, "CHALLENGE_TYPE", "CHALLENGE").strip().upper()
 
         defense_response = run_agent(
             client,
-            build_defense_prompt(user_question, current_conclusion, challenger_response, peer_data_json),
+            build_defense_prompt(
+                user_question, current_conclusion, challenger_response, peer_data_json),
             model=model,
         )
         judge_response = run_agent(
             client,
-            build_judge_prompt(user_question, analyst_response, challenger_response, defense_response, peer_data_json),
+            build_judge_prompt(user_question, analyst_response,
+                               challenger_response, defense_response, peer_data_json),
             model=model,
         )
-        verdict = extract_section(judge_response, "VERDICT", "CONFIDENCE").strip().upper()
-        confidence = extract_section(judge_response, "CONFIDENCE", "REASON").strip().upper()
+        verdict = extract_section(
+            judge_response, "VERDICT", "CONFIDENCE").strip().upper()
+        confidence = extract_section(
+            judge_response, "CONFIDENCE", "REASON").strip().upper()
 
         trail.append({
             "round": review_round,
