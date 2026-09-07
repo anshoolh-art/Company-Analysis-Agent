@@ -2,7 +2,7 @@
 
 A command-line tool that combines deterministic financial-metric calculations with an LLM "review council" (Analyst → Challenger → Defense → Judge) to answer free-form questions about a peer group of companies.
 
-You ask a question (e.g. *"Which company has the most debt?"*); the tool computes standardized metrics from the raw financial data in Python, then runs those metrics through a multi-agent review loop that drafts an answer, adversarially challenges it, defends/revises it, and independently judges whether the final answer is well-supported — before printing you a single clean conclusion.
+You ask a question (e.g. *"Which company has the most debt?"*); the tool computes standardized metrics from the raw financial data in Python, then runs those metrics through a multi-agent review loop that drafts an answer, adversarially challenges it, defends/revises it, and independently judges whether the final answer is well-supported before printing you a single clean conclusion.
 
 ## Setup
 
