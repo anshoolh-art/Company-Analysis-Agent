@@ -130,7 +130,11 @@ def main():
     print(result["final_answer"])
     print(f"\nConfidence: {result['confidence']}")
 
-    if result["confidence"] != "HIGH":
+    if result["fact_check_warnings"]:
+        print("\nFact-check warnings (cited figures not found in the dataset):")
+        for w in result["fact_check_warnings"]:
+            print(f"  - {w}")
+    elif result["confidence"] != "HIGH":
         if not result["consensus_reached"]:
             print(
                 f"No consensus reached after {result['rounds_run']} review "

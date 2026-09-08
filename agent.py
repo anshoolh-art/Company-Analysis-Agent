@@ -19,6 +19,8 @@ import json
 import re
 import textwrap
 
+from fact_check import fact_check_final_answer
+
 DEFAULT_MODEL = "gpt-4o-mini"
 
 
@@ -766,8 +768,13 @@ def run_council(client, user_question, peer_data_json, max_rounds=3, model=DEFAU
       passed             -- whether the Judge ever returned PASS
       confidence         -- "HIGH"/"MEDIUM"/"LOW", the Judge's confidence
                              on the final round used, forced to "LOW" if
-                             max_rounds was exhausted without a PASS
+                             max_rounds was exhausted without a PASS OR
+                             if fact_check_final_answer() finds a cited
+                             figure that doesn't match the dataset
       consensus_reached  -- same as `passed`, unless overridden above
+      fact_check_warnings -- output of fact_check_final_answer() against
+                             the final answer; see fact_check.py for what
+                             this does and does not catch
       trail              -- per-round challenger/defense/judge/verdict/
                              challenge_type, for DEBUG_MODE-style inspection
     """
@@ -827,11 +834,20 @@ def run_council(client, user_question, peer_data_json, max_rounds=3, model=DEFAU
 
     final_answer = extract_section(defense_response, "FINAL_ANSWER", "DEFENSE")
 
+    fact_check_warnings = fact_check_final_answer(final_answer, peer_data_json)
+
     consensus_reached = passed
     if not passed:
         # Max rounds exhausted without a PASS -- the last proposed
         # answer is unresolved, regardless of what the Judge's last
         # CONFIDENCE line said.
+        confidence = "LOW"
+    if fact_check_warnings:
+        # A cited figure that doesn't match the dataset is a stronger
+        # signal than the Judge's own self-assessment -- the Judge
+        # itself produced two confidently-wrong answers in testing
+        # (a fabricated growth figure, a false comparison between two
+        # correct numbers) that this check exists specifically to catch.
         confidence = "LOW"
 
     return {
@@ -841,5 +857,6 @@ def run_council(client, user_question, peer_data_json, max_rounds=3, model=DEFAU
         "passed": passed,
         "confidence": confidence,
         "consensus_reached": consensus_reached,
+        "fact_check_warnings": fact_check_warnings,
         "trail": trail,
     }

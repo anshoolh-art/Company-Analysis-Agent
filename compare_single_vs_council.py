@@ -129,6 +129,7 @@ def main():
             "council_judge_passed": council_result["passed"],
             "council_confidence": council_result["confidence"],
             "council_consensus_reached": council_result["consensus_reached"],
+            "council_fact_check_warnings": council_result["fact_check_warnings"],
         })
 
     json_path = os.path.join(OUTPUT_DIR, f"results_{run_id}.json")
@@ -155,6 +156,11 @@ def main():
                 f"consensus reached: {r['council_consensus_reached']}):\n\n"
                 f"{r['council_final_answer']}\n\n"
             )
+            if r["council_fact_check_warnings"]:
+                f.write("**Fact-check warnings (cited figures not found in the dataset):**\n\n")
+                for w in r["council_fact_check_warnings"]:
+                    f.write(f"- {w}\n")
+                f.write("\n")
             f.write("**Scoring notes (a / b / c):**\n\n- \n\n---\n\n")
 
     print(f"\nWrote {json_path}")

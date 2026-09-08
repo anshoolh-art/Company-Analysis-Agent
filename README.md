@@ -105,10 +105,66 @@ actual verdict.
 python compare_single_vs_council.py
 ```
 
-Status: script is built and smoke-tested (with a mocked API client,
-to confirm the plumbing works), but not yet run against the real
-dataset with a live API key — the results and conclusion aren't in
-yet.
+### Results
+
+Ran against the real dataset, 10 questions, scored against
+`SCORING.md`'s rubric (correct / complete / hedged / on-topic, 0-1
+each, 4 max per answer, summed across all 10 questions):
+
+| Arm | Score |
+|---|---|
+| (a) Naive single-agent | **40/40** |
+| (b) Self-critique single-agent | 37/40 |
+| (c) Full council | 30/40 |
+
+**The plain single-call baseline won outright.** More importantly,
+the council produced two confidently-wrong answers, not just weaker
+ones: it declared a correct operating-margin comparison a "factual
+error" and asserted a false replacement, and separately fabricated a
+growth figure (22.6%, appearing nowhere in the dataset) and presented
+it as a "correction" to a number that was already right — both rated
+`CONFIDENCE: HIGH` by the Judge. That's a more dangerous failure mode
+than the earlier, honestly-flagged non-consensus cases: nothing in
+the output signaled the user should doubt it.
+
+### Fixes applied, in the order they were found necessary
+
+1. **Challenger grounding + FACTUAL/INTERPRETIVE classification** — the
+   Challenger must cite a specific dataset figure to challenge
+   anything, and can only FAIL on a FACTUAL issue (not a reasonable
+   alternative interpretation).
+2. **Judge cross-consistency check + CONFIDENCE field** — the Judge
+   checks whether a conclusion contradicts another figure already in
+   the dataset, and emits `HIGH`/`MEDIUM`/`LOW` confidence.
+3. **Judge told not to FAIL on an INTERPRETIVE-only objection** — closes
+   the gap where classification existed but the agent that actually
+   controls the loop wasn't bound by it.
+4. **`fact_check.py`: a deterministic, code-level check**, run against
+   every council answer — not a prompt, actual Python — that any
+   number cited near a company's name in the final answer exists
+   somewhere in that company's real data (raw financials, computed
+   metrics, or year-over-year differences, in the right units). A
+   warning forces `CONFIDENCE` to `LOW` regardless of what the Judge
+   itself said. This exists because steps 1-3 are all still prompts —
+   they reduce ungrounded disagreement, but nothing stops a model from
+   confidently fabricating a number in the first place. Five real
+   false-positive/negative bugs were found and fixed against actual
+   captured model output before this was trusted (see the module's
+   docstring and `tests/test_fact_check.py` for specifics) — it
+   deliberately checks percentages and raw figures in separate pools,
+   bounds its scan window at the next company mention or list marker
+   (not a fixed character count), and recognizes a company by a
+   shortened alias, not just its exact dataset name.
+
+### Status
+
+`fact_check.py`'s logic is unit-tested against real captured model
+output, including the actual fabrication case above (see
+`tests/test_fact_check.py`), and verified end-to-end against a mocked
+`run_council()` reproducing that exact scenario. **The full pipeline
+has not been re-run against a live API key since this fix** — whether
+it changes the overall single-agent-vs-council comparison in the
+table above is not yet known.
 
 ## Known Limitations
 
@@ -117,3 +173,4 @@ yet.
 - **Only two fiscal years of data (FY2024, FY2025).** Trend analysis is a single year-over-year comparison, not a multi-year track record.
 - **No macro or industry context.** The agents reason only from the supplied peer dataset — no competitor data outside these five companies, no industry benchmarks, no qualitative context (management changes, product cycles, etc.).
 - **Micro-Mechanics has no `operating_cash_flow` in the dataset**, so any metric depending on it (cash conversion, OCF margin) is `None` for that company — this is surfaced to the LLM as a stated data gap, not silently ignored.
+- **`fact_check.py` catches fabricated numbers, not flawed reasoning.** It verifies that a cited figure exists in the dataset for that company — it does NOT verify that a *comparison* between two individually-correct numbers is reasoned correctly (e.g. the real case where the council asserted "6.51% is lower than 5.55%," which is false, using two numbers that were each individually right). That would need a different check entirely — parsing comparison claims and verifying the arithmetic direction — and hasn't been built.
